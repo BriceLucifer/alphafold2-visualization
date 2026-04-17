@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 // ── Section data ───────────────────────────────────────
 
 interface Section {
   id: number
   title: string
-  content: JSX.Element
+  content: React.ReactNode
 }
 
 // ── Visual components ──────────────────────────────────

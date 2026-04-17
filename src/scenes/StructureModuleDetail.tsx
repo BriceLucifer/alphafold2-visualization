@@ -114,7 +114,7 @@ const CAT_COLORS = {
 
 // ── IPA Visualization ──────────────────────────────────
 
-function IPAVisualization({ step }: { step: number }) {
+function IPAVisualization({ step: _step }: { step: number }) {
   // Show residues as frames in 2D, with attention between them
   const residues = [
     { id: 0, x: 80, y: 200, angle: -30, label: 'Ala₁₂', color: '#3f51b5' },

@@ -150,7 +150,7 @@ const CAT_COLORS = {
 const N = 8 // small matrix for visualization
 
 function PairMatrixViz({
-  activeOp, animStep, highlightI, highlightJ, highlightK,
+  activeOp, animStep: _animStep, highlightI, highlightJ, highlightK,
 }: {
   activeOp: BlockOp
   animStep: number
@@ -829,7 +829,7 @@ function BlockList({ ops, activeId, onSelect }: {
 export function EvoformerDetail({ onBack }: { onBack: () => void }) {
   const [activeOpId, setActiveOpId] = useState(3) // start on triangle mult
   const [playing, setPlaying] = useState(true)
-  const [animStep, setAnimStep] = useState(0)
+  const [animStep, _setAnimStep] = useState(0)
   const [highlightK, setHighlightK] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const kIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
