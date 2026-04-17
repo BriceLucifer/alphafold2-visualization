@@ -1,73 +1,96 @@
-# React + TypeScript + Vite
+# AlphaFold2 Visually
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive 3D visualization that explains the AlphaFold2 algorithm step by step — inspired by [bbycroft.net/llm](https://bbycroft.net/llm).
 
-Currently, two official plugins are available:
+This is **not** a molecular structure viewer. It visualizes the **algorithm itself**: how Evoformer, Triangle Attention, and IPA turn amino acid sequences into predicted protein structures.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+<!-- TODO: add a screenshot/gif here once the visuals are polished -->
 
-## React Compiler
+## What You'll See
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The app walks through the AlphaFold2 pipeline as a series of interactive 3D scenes:
 
-## Expanding the ESLint configuration
+1. **Protein Intro** — What is a protein? Amino acid chains in 3D.
+2. **Architecture Overview** — The full AlphaFold2 pipeline at a glance (MSA → Evoformer → Structure Module).
+3. **Evoformer Detail** — Deep dive into Triangle Attention: watch how information flows between residue pairs through triangular message passing on the pair representation matrix.
+4. **Structure Module Detail** — How the predicted 3D coordinates emerge from the learned representations.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Each scene features:
+- Freely rotatable 3D camera (orbit, zoom, pan)
+- Step-by-step animation with play/pause controls
+- Mathematical formulas rendered with KaTeX
+- Plain-language explanations alongside every step
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Layer | Choice |
+|-------|--------|
+| Framework | React 19 + TypeScript + Vite |
+| 3D Engine | Three.js + react-three-fiber + drei |
+| Post-processing | @react-three/postprocessing (bloom, vignette) |
+| Animation | GSAP + useFrame |
+| Math Rendering | KaTeX |
+| State | Zustand |
+| Debug | Leva |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+
+```bash
+# Clone
+git clone git@github.com:BriceLucifer/alphafold2-visualization.git
+cd alphafold2-visualization
+
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Build & Deploy
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Production build
+npm run build
+
+# Preview the build locally
+npm run preview
 ```
+
+The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) for automatic deployment to GitHub Pages on push to `main`.
+
+## Project Structure
+
+```
+src/
+  scenes/           # Full-screen 3D scene components (one per pipeline stage)
+  primitives/       # Reusable 3D building blocks
+    Residue.tsx         # Single amino acid node (sphere + label)
+    ResidueChain.tsx    # Chain of residues with entrance animation
+    PairMatrix.tsx      # N×N heatmap plane (InstancedMesh + diverging colormap)
+    TriangleHighlight.tsx  # Glowing triangle overlay on pair matrix
+    AttentionFlow.tsx   # Particle stream showing information flow
+  data/             # Synthetic data generators (no real model weights)
+  store/            # Zustand animation state
+  ui/               # 2D overlay controls (playback bar, info panel, title)
+  config.ts         # All magic numbers in one place (colors, sizes, timing)
+```
+
+## Roadmap
+
+- [x] **Phase 1** — Triangle Attention MVP: single-module deep dive with full animation
+- [ ] **Phase 2** — Complete pipeline: MSA embedding, full Evoformer, Structure Module, Recycling with camera transitions between modules
+- [ ] **Phase 3** — Real data: Rust/Wasm inference (ESMFold or simplified), user-supplied sequences
+
+## Acknowledgments
+
+- [AlphaFold2 paper](https://www.nature.com/articles/s41586-021-03819-2) — Jumper et al., 2021
+- [bbycroft.net/llm](https://bbycroft.net/llm) — Direct inspiration for the interactive visual style
+- [Bartosz Ciechanowski](https://ciechanow.ski) — Gold standard for scroll-driven 3D explainers
+- [Distill.pub](https://distill.pub) — Narrative style reference
+
+## License
+
+MIT
