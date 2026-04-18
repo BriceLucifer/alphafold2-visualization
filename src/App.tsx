@@ -3,8 +3,9 @@ import { ProteinIntro } from './scenes/ProteinIntro'
 import { ArchitectureOverview } from './scenes/ArchitectureOverview'
 import { EvoformerDetail } from './scenes/EvoformerDetail'
 import { StructureModuleDetail } from './scenes/StructureModuleDetail'
+import { InputEmbeddingDetail } from './scenes/InputEmbeddingDetail'
 
-type View = 'intro' | 'overview' | 'evoformer' | 'structure'
+type View = 'intro' | 'overview' | 'evoformer' | 'structure' | 'embeddings'
 
 export default function App() {
   const [view, setView] = useState<View>('intro')
@@ -15,16 +16,13 @@ export default function App() {
   const navigateTo = useCallback((target: View) => {
     if (target === view || transitioning) return
     setTransitioning(true)
-    // Fade out
     setTimeout(() => {
       setDisplayView(target)
       setView(target)
-      // Fade in
-      setTimeout(() => setTransitioning(false), 50)
-    }, 300)
+      setTimeout(() => setTransitioning(false), 60)
+    }, 350)
   }, [view, transitioning])
 
-  // On first mount, trigger fade-in
   useEffect(() => {
     setTransitioning(true)
     requestAnimationFrame(() => {
@@ -33,19 +31,19 @@ export default function App() {
   }, [])
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', background: '#0a0a15' }}>
       <style>{`
         .view-container {
           width: 100%; height: 100%;
-          transition: opacity 0.3s ease, transform 0.35s ease;
+          transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .view-container.fade-out {
           opacity: 0;
-          transform: scale(0.98);
+          transform: scale(0.97) translateY(4px);
         }
         .view-container.fade-in {
           opacity: 1;
-          transform: scale(1);
+          transform: scale(1) translateY(0);
         }
       `}</style>
       <div
@@ -66,6 +64,9 @@ export default function App() {
         )}
         {displayView === 'structure' && (
           <StructureModuleDetail onBack={() => navigateTo('overview')} />
+        )}
+        {displayView === 'embeddings' && (
+          <InputEmbeddingDetail onBack={() => navigateTo('overview')} />
         )}
       </div>
     </div>

@@ -139,16 +139,17 @@ const STAGES: StageInfo[] = [
   {
     id: 8,
     title: 'Recycling',
-    subtitle: 'Iterative self-refinement — 3 rounds',
+    subtitle: 'Iterative self-refinement — N_cycle = 4 rounds (Algorithm 30)',
     description:
-      'The entire Evoformer + Structure Module is run 3 times. Each round, the predicted structure feeds back to update the pair representation with actual 3D distances, allowing the model to self-correct — like a sculptor progressively refining a statue.',
+      'The entire Evoformer + Structure Module is run N_cycle = 4 times (Algorithm 30). Each round, RecyclingEmbedder (Algorithm 32) feeds back: the single representation s_i, pair representation z_ij, and predicted Cα positions from the previous cycle. Outputs start as zeros; shared weights across all cycles.',
     details: [
-      'Round 1: predicts from MSA/templates alone — often gets the overall fold right but details wrong',
-      'Round 2: "I predicted residues 45 and 112 are 6Å apart — let me feed that back and refine"',
-      'Round 3: final refinement — typically improves GDT by 2–5 points over round 1',
-      'Example: for multi-domain proteins, round 1 may get individual domains right but wrong relative orientation; recycling fixes this',
-      'Gradients only flow through the final round (stop-gradient on rounds 1–2) — prevents training instability',
-      'This mirrors iterative refinement in experimental crystallography: solve → refine → solve again',
+      'Cycle 1: predicts from MSA/templates alone (initial outputs = 0) — gets rough fold',
+      'Cycle 2–4: feeds back previous s_i, z_ij, and distogram from predicted Cα distances',
+      'RecyclingEmbedder: z_ij += Linear(prev_z_ij) + distogram(Cα positions) — actual 3D feedback',
+      'stopgrad between cycles (Algorithm 31): outputs ← stopgrad(outputs) — no gradients flow backward',
+      'Training: randomly sample N\' ~ uniform(1, N_cycle) cycles to save memory',
+      'Ablation study: removing recycling degrades accuracy significantly',
+      'This makes the network "recurrent" — deeper effective depth without more parameters',
     ],
     highlightRect: { x: 480, y: 450, w: 720, h: 55 },
   },
@@ -681,26 +682,33 @@ export function ArchitectureOverview({ onDrillIn, onBack }: { onDrillIn?: (targe
           <PlusSign x={445} y={Y_MSA + 90} />
           <ArrowLine points={[[458, Y_MSA + 90], [510, Y_MSA + 90]]} />
 
-          <SeqIconRow x={520} y={Y_MSA + 50} scale={0.55} />
-          <MSAReprBlock x={515} y={Y_MSA + 58} w={95} h={70} />
-          <text x={562} y={Y_MSA + 146} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">MSA</text>
-          <text x={562} y={Y_MSA + 158} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">representation</text>
-          <text x={562} y={Y_MSA + 172} textAnchor="middle" fontSize={11} fill="#e65100" fontFamily="Inter, sans-serif">(s,r,c)</text>
+          <g onClick={() => onDrillIn?.('embeddings')} cursor="pointer">
+            <SeqIconRow x={520} y={Y_MSA + 50} scale={0.55} />
+            <MSAReprBlock x={515} y={Y_MSA + 58} w={95} h={70} />
+            <text x={562} y={Y_MSA + 146} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">MSA</text>
+            <text x={562} y={Y_MSA + 158} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">representation</text>
+            <text x={562} y={Y_MSA + 172} textAnchor="middle" fontSize={11} fill="#e65100" fontFamily="Inter, sans-serif">(s,r,c)</text>
 
-          {/* Plus → Pair Repr */}
-          <ArrowLine points={[[380, Y_PAIR + 30], [435, Y_PAIR + 80]]} />
-          <ArrowLine points={[[340, Y_STRUCT + 20], [435, Y_PAIR + 82]]} />
-          <PlusSign x={445} y={Y_PAIR + 82} />
-          <ArrowLine points={[[458, Y_PAIR + 82], [510, Y_PAIR + 82]]} />
+            {/* Plus → Pair Repr */}
+            <ArrowLine points={[[380, Y_PAIR + 30], [435, Y_PAIR + 80]]} />
+            <ArrowLine points={[[340, Y_STRUCT + 20], [435, Y_PAIR + 82]]} />
+            <PlusSign x={445} y={Y_PAIR + 82} />
+            <ArrowLine points={[[458, Y_PAIR + 82], [510, Y_PAIR + 82]]} />
 
-          <SeqIconRow x={520} y={Y_PAIR + 44} scale={0.55} />
-          <g transform={`translate(${610}, ${Y_PAIR + 52}) rotate(90)`}>
-            <SeqIconRow x={0} y={0} scale={0.55} />
+            <SeqIconRow x={520} y={Y_PAIR + 44} scale={0.55} />
+            <g transform={`translate(${610}, ${Y_PAIR + 52}) rotate(90)`}>
+              <SeqIconRow x={0} y={0} scale={0.55} />
+            </g>
+            <RepresentationBlock x={515} y={Y_PAIR + 52} w={85} h={85} color="#64b5f6" />
+            <text x={557} y={Y_PAIR + 152} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">Pair</text>
+            <text x={557} y={Y_PAIR + 164} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">representation</text>
+            <text x={557} y={Y_PAIR + 178} textAnchor="middle" fontSize={11} fill="#e65100" fontFamily="Inter, sans-serif">(r,r,c)</text>
+
+            {/* Click hint */}
+            <text x={557} y={Y_PAIR + 195} textAnchor="middle" fontSize={10} fill="#1976d2" fontFamily="Inter, sans-serif" opacity={0.7}>
+              click to explore →
+            </text>
           </g>
-          <RepresentationBlock x={515} y={Y_PAIR + 52} w={85} h={85} color="#64b5f6" />
-          <text x={557} y={Y_PAIR + 152} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">Pair</text>
-          <text x={557} y={Y_PAIR + 164} textAnchor="middle" fontSize={11} fill="#333" fontFamily="Inter, sans-serif">representation</text>
-          <text x={557} y={Y_PAIR + 178} textAnchor="middle" fontSize={11} fill="#e65100" fontFamily="Inter, sans-serif">(r,r,c)</text>
 
           {/* → Evoformer */}
           <ArrowLine points={[[615, Y_MSA + 95], [690, Y_MSA + 140]]} />
@@ -763,7 +771,8 @@ export function ArchitectureOverview({ onDrillIn, onBack }: { onDrillIn?: (targe
           <ArrowLine points={[[760, Y_MSA + 240], [760, Y_RECYCLE - 5]]} color="#78909c" />
           <ArrowLine points={[[1135, Y_MSA + 240], [1135, Y_RECYCLE - 5]]} color="#78909c" />
           <rect x={540} y={Y_RECYCLE} width={650} height={42} rx={6} fill="rgba(200,220,240,0.2)" stroke="#90a4ae" strokeWidth={1.5} />
-          <text x={865} y={Y_RECYCLE + 27} textAnchor="middle" fontSize={14} fill="#333" fontFamily="Inter, sans-serif">← Recycling (three times)</text>
+          <text x={865} y={Y_RECYCLE + 18} textAnchor="middle" fontSize={14} fill="#333" fontFamily="Inter, sans-serif">← Recycling (N_cycle = 4, Alg 30)</text>
+          <text x={865} y={Y_RECYCLE + 36} textAnchor="middle" fontSize={10} fill="#78909c" fontFamily="JetBrains Mono, monospace">stopgrad between cycles · s_i + z_ij + Cα distogram fed back</text>
           <ArrowLine points={[[540, Y_RECYCLE + 21], [490, Y_RECYCLE + 21], [490, Y_MSA + 95], [510, Y_MSA + 93]]} color="#78909c" dashed />
           <ArrowLine points={[[540, Y_RECYCLE + 21], [490, Y_RECYCLE + 21], [490, Y_PAIR + 90], [510, Y_PAIR + 88]]} color="#78909c" dashed />
 
