@@ -128,7 +128,7 @@ function IPAVisualization({ step: _step }: { step: number }) {
   const pointOffset = 20
 
   return (
-    <svg viewBox="0 0 660 360" style={{ width: '100%', maxWidth: 660, height: 'auto' }}>
+    <svg viewBox="0 0 660 340" style={{ width: '100%', maxWidth: 660, height: 'auto' }}>
       <text x={330} y={20} textAnchor="middle" fontSize={13} fontWeight={600}
         fill="#333" fontFamily="Inter, sans-serif">Invariant Point Attention — 3D-aware attention</text>
 
@@ -200,8 +200,38 @@ function IPAVisualization({ step: _step }: { step: number }) {
         )
       })}
 
+      {/* Distance measurement lines between close residue pairs */}
+      {[[0, 3], [1, 4]].map(([i, j]) => {
+        const r1 = residues[i], r2 = residues[j]
+        const mx = (r1.x + r2.x) / 2, my = (r1.y + r2.y) / 2
+        return (
+          <g key={`dist-${i}-${j}`}>
+            {/* Distance indicator */}
+            <text x={mx} y={my - 12} textAnchor="middle" fontSize={9}
+              fill="#ff6f00" fontWeight={600} fontFamily="JetBrains Mono, monospace">
+              {i === 0 ? '6.2Å' : '7.1Å'}
+            </text>
+            <text x={mx} y={my + 2} textAnchor="middle" fontSize={8}
+              fill="#999" fontFamily="Inter, sans-serif">
+              3D close!
+            </text>
+          </g>
+        )
+      })}
+
+      {/* Sequence distance indicator */}
+      <g transform="translate(20, 265)">
+        <rect x={0} y={0} width={620} height={30} rx={6} fill="#fff3e0" opacity={0.5} />
+        <text x={10} y={19} fontSize={10} fill="#e65100" fontWeight={600} fontFamily="Inter, sans-serif">
+          Key insight:
+        </text>
+        <text x={90} y={19} fontSize={10} fill="#555" fontFamily="Inter, sans-serif">
+          Residues 12↔15 are 3 apart in sequence but 6.2Å in 3D → IPA gives high attention
+        </text>
+      </g>
+
       {/* Legend */}
-      <g transform="translate(20, 300)">
+      <g transform="translate(20, 310)">
         <line x1={0} y1={5} x2={15} y2={5} stroke="#c62828" strokeWidth={2} />
         <text x={20} y={9} fontSize={10} fill="#666" fontFamily="Inter, sans-serif">x-axis (R)</text>
         <line x1={100} y1={5} x2={115} y2={5} stroke="#2e7d32" strokeWidth={2} />
@@ -211,11 +241,6 @@ function IPAVisualization({ step: _step }: { step: number }) {
         <line x1={340} y1={5} x2={370} y2={5} stroke="#ff6f00" strokeWidth={2.5} />
         <text x={375} y={9} fontSize={10} fill="#666" fontFamily="Inter, sans-serif">high attention (3D-close)</text>
       </g>
-
-      <text x={330} y={340} textAnchor="middle" fontSize={11} fill="#999" fontStyle="italic"
-        fontFamily="Inter, sans-serif">
-        Residues 12↔15 and 13↔16 are far in sequence but close in 3D → high attention
-      </text>
     </svg>
   )
 }

@@ -393,6 +393,30 @@ function TemplateBox({ x, y, w, h }: { x: number; y: number; w: number; h: numbe
   )
 }
 
+function TensorShapeLabel({ x, y, shape, example, color }: {
+  x: number; y: number; shape: string; example: string; color: string
+}) {
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <rect x={-40} y={-10} width={80} height={20} rx={10}
+        fill={`${color}15`} stroke={color} strokeWidth={0.8} />
+      <text x={0} y={3} textAnchor="middle" fontSize={9} fontWeight={600}
+        fill={color} fontFamily="JetBrains Mono, monospace">{shape}</text>
+      <text x={0} y={20} textAnchor="middle" fontSize={8}
+        fill="#999" fontFamily="JetBrains Mono, monospace">{example}</text>
+    </g>
+  )
+}
+
+function DataTransformLabel({ x, y, text }: { x: number; y: number; text: string }) {
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <text x={0} y={0} textAnchor="middle" fontSize={8.5}
+        fill="#78909c" fontStyle="italic" fontFamily="Inter, sans-serif">{text}</text>
+    </g>
+  )
+}
+
 function SingleRepr({ x, y }: { x: number; y: number }) {
   return (
     <g transform={`translate(${x}, ${y})`}>
@@ -682,7 +706,22 @@ export function ArchitectureOverview({ onDrillIn, onBack }: { onDrillIn?: (targe
           <ArrowLine points={[[615, Y_MSA + 95], [690, Y_MSA + 140]]} />
           <ArrowLine points={[[605, Y_PAIR + 95], [690, Y_PAIR + 50]]} />
           <g onClick={() => onDrillIn?.('evoformer')} cursor="pointer">
+            {/* Pulsing glow behind Evoformer to show it's the core */}
+            <rect x={690} y={Y_MSA + 95} width={140} height={150} rx={14}
+              fill="none" stroke="#1976d2" strokeWidth={2}>
+              <animate attributeName="stroke-opacity" values="0.1;0.4;0.1" dur="3s" repeatCount="indefinite" />
+            </rect>
             <BigModule x={695} y={Y_MSA + 100} w={130} h={140} line1="Evoformer" line2="(48 blocks)" />
+            {/* Internal detail hint — tiny triangle icon */}
+            <g transform={`translate(760, ${Y_MSA + 195})`}>
+              <polygon points="0,-8 7,6 -7,6" fill="none" stroke="#1976d2" strokeWidth={1.2} opacity={0.5} />
+              <circle cx={0} cy={-8} r={2} fill="#1976d2" opacity={0.5} />
+              <circle cx={7} cy={6} r={2} fill="#1976d2" opacity={0.5} />
+              <circle cx={-7} cy={6} r={2} fill="#1976d2" opacity={0.5} />
+            </g>
+            <text x={760} y={Y_MSA + 215} textAnchor="middle" fontSize={9} fill="#1976d2" fontFamily="Inter, sans-serif" opacity={0.6}>
+              triangle attention
+            </text>
             <text x={760} y={Y_MSA + 250} textAnchor="middle" fontSize={10} fill="#1976d2" fontFamily="Inter, sans-serif" opacity={0.7}>
               click to explore →
             </text>
@@ -727,6 +766,16 @@ export function ArchitectureOverview({ onDrillIn, onBack }: { onDrillIn?: (targe
           <text x={865} y={Y_RECYCLE + 27} textAnchor="middle" fontSize={14} fill="#333" fontFamily="Inter, sans-serif">← Recycling (three times)</text>
           <ArrowLine points={[[540, Y_RECYCLE + 21], [490, Y_RECYCLE + 21], [490, Y_MSA + 95], [510, Y_MSA + 93]]} color="#78909c" dashed />
           <ArrowLine points={[[540, Y_RECYCLE + 21], [490, Y_RECYCLE + 21], [490, Y_PAIR + 90], [510, Y_PAIR + 88]]} color="#78909c" dashed />
+
+          {/* ── Tensor shape annotations ── */}
+          <TensorShapeLabel x={562} y={Y_MSA + 40} shape="(s, r, c)" example="512×200×256" color="#e65100" />
+          <TensorShapeLabel x={557} y={Y_PAIR + 38} shape="(r, r, c)" example="200×200×128" color="#1565c0" />
+          <TensorShapeLabel x={932} y={Y_PAIR + 38} shape="(r, r, c)" example="200×200×128" color="#1565c0" />
+
+          {/* ── Data transformation annotations along arrows ── */}
+          <DataTransformLabel x={448} y={Y_MSA + 70} text="embed + fuse" />
+          <DataTransformLabel x={740} y={Y_MSA + 95} text="48× refine" />
+          <DataTransformLabel x={1135} y={Y_MSA + 95} text="→ xyz coords" />
 
           {/* ── Flow particles ── */}
           {flowPaths.map(fp => (

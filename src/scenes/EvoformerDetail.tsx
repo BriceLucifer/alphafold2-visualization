@@ -268,49 +268,72 @@ function PairMatrixViz({
       )}
 
       {/* Triangle lines for triangle ops */}
-      {isTriangleOp && triangleEdges.length === 2 && (
-        <g>
-          {/* Line from edge1 to target */}
-          <line
-            x1={ox + triangleEdges[0][1] * cellSize + cellSize / 2}
-            y1={oy + triangleEdges[0][0] * cellSize + cellSize / 2}
-            x2={ox + highlightJ * cellSize + cellSize / 2}
-            y2={oy + highlightI * cellSize + cellSize / 2}
-            stroke="#4caf50" strokeWidth={2} strokeDasharray="4,3" opacity={0.7}
-          />
-          {/* Line from edge2 to target */}
-          <line
-            x1={ox + triangleEdges[1][1] * cellSize + cellSize / 2}
-            y1={oy + triangleEdges[1][0] * cellSize + cellSize / 2}
-            x2={ox + highlightJ * cellSize + cellSize / 2}
-            y2={oy + highlightI * cellSize + cellSize / 2}
-            stroke="#4caf50" strokeWidth={2} strokeDasharray="4,3" opacity={0.7}
-          />
-          {/* Line between the two edges */}
-          <line
-            x1={ox + triangleEdges[0][1] * cellSize + cellSize / 2}
-            y1={oy + triangleEdges[0][0] * cellSize + cellSize / 2}
-            x2={ox + triangleEdges[1][1] * cellSize + cellSize / 2}
-            y2={oy + triangleEdges[1][0] * cellSize + cellSize / 2}
-            stroke="#81c784" strokeWidth={1.5} strokeDasharray="3,3" opacity={0.5}
-          />
+      {isTriangleOp && triangleEdges.length === 2 && (() => {
+        const tx = ox + highlightJ * cellSize + cellSize / 2
+        const ty = oy + highlightI * cellSize + cellSize / 2
+        const e1x = ox + triangleEdges[0][1] * cellSize + cellSize / 2
+        const e1y = oy + triangleEdges[0][0] * cellSize + cellSize / 2
+        const e2x = ox + triangleEdges[1][1] * cellSize + cellSize / 2
+        const e2y = oy + triangleEdges[1][0] * cellSize + cellSize / 2
+        return (
+          <g>
+            {/* Glowing triangle fill */}
+            <polygon
+              points={`${tx},${ty} ${e1x},${e1y} ${e2x},${e2y}`}
+              fill="#4caf50" opacity={0.06}
+            >
+              <animate attributeName="opacity" values="0.03;0.1;0.03" dur="2s" repeatCount="indefinite" />
+            </polygon>
 
-          {/* Animated particle: edge1 → target */}
-          <circle r={4} fill="#4caf50" opacity={0.9}>
-            <animateMotion
-              dur="1.5s" repeatCount="indefinite"
-              path={`M${ox + triangleEdges[0][1] * cellSize + cellSize / 2},${oy + triangleEdges[0][0] * cellSize + cellSize / 2} L${ox + highlightJ * cellSize + cellSize / 2},${oy + highlightI * cellSize + cellSize / 2}`}
-            />
-          </circle>
-          {/* Animated particle: edge2 → target */}
-          <circle r={4} fill="#4caf50" opacity={0.9}>
-            <animateMotion
-              dur="1.5s" repeatCount="indefinite" begin="0.3s"
-              path={`M${ox + triangleEdges[1][1] * cellSize + cellSize / 2},${oy + triangleEdges[1][0] * cellSize + cellSize / 2} L${ox + highlightJ * cellSize + cellSize / 2},${oy + highlightI * cellSize + cellSize / 2}`}
-            />
-          </circle>
-        </g>
-      )}
+            {/* Edge lines with glow */}
+            {[[e1x, e1y, tx, ty], [e2x, e2y, tx, ty], [e1x, e1y, e2x, e2y]].map(([x1, y1, x2, y2], i) => (
+              <g key={`edge-${i}`}>
+                <line x1={x1} y1={y1} x2={x2} y2={y2}
+                  stroke="#4caf50" strokeWidth={i < 2 ? 2.5 : 1.5}
+                  strokeDasharray={i < 2 ? undefined : '3,3'}
+                  opacity={i < 2 ? 0.7 : 0.5} />
+                {/* Glow line underneath */}
+                <line x1={x1} y1={y1} x2={x2} y2={y2}
+                  stroke="#81c784" strokeWidth={i < 2 ? 6 : 3}
+                  opacity={0.12} strokeLinecap="round" />
+              </g>
+            ))}
+
+            {/* Multiple animated particles: edge1 → target */}
+            {[0, 0.5, 1.0].map((delay, pi) => (
+              <g key={`p1-${pi}`}>
+                <circle r={4} fill="#4caf50" opacity={0.9}>
+                  <animateMotion dur="1.2s" begin={`${delay}s`} repeatCount="indefinite"
+                    path={`M${e1x},${e1y} L${tx},${ty}`} />
+                </circle>
+                <circle r={8} fill="#4caf50" opacity={0.15}>
+                  <animateMotion dur="1.2s" begin={`${delay}s`} repeatCount="indefinite"
+                    path={`M${e1x},${e1y} L${tx},${ty}`} />
+                </circle>
+              </g>
+            ))}
+            {/* Multiple animated particles: edge2 → target */}
+            {[0.2, 0.7, 1.2].map((delay, pi) => (
+              <g key={`p2-${pi}`}>
+                <circle r={4} fill="#66bb6a" opacity={0.9}>
+                  <animateMotion dur="1.2s" begin={`${delay}s`} repeatCount="indefinite"
+                    path={`M${e2x},${e2y} L${tx},${ty}`} />
+                </circle>
+                <circle r={8} fill="#66bb6a" opacity={0.15}>
+                  <animateMotion dur="1.2s" begin={`${delay}s`} repeatCount="indefinite"
+                    path={`M${e2x},${e2y} L${tx},${ty}`} />
+                </circle>
+              </g>
+            ))}
+
+            {/* Impact burst at target */}
+            <circle cx={tx} cy={ty} r={6} fill="none" stroke="#ffab00" strokeWidth={2}>
+              <animate attributeName="r" values="4;12;4" dur="1.5s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.8;0;0.8" dur="1.5s" repeatCount="indefinite" />
+            </circle>
+          </g>
+        )
+      })()}
 
       {/* Legend */}
       <g transform={`translate(${ox}, ${oy + matrixSize + 12})`}>
@@ -480,19 +503,43 @@ function OuterProductViz() {
         pair[i,j]
       </text>
 
-      {/* Animated particles from MSA columns to pair cell */}
+      {/* Animated particles from MSA columns to pair cell — multiple waves */}
       {Array.from({ length: 5 }).map((_, s) => (
         <g key={`p-${s}`}>
-          <circle r={3} fill="#7b1fa2" opacity={0.8}>
-            <animateMotion dur="2s" begin={`${s * 0.3}s`} repeatCount="indefinite"
+          {/* Primary particles */}
+          <circle r={3.5} fill="#7b1fa2" opacity={0.85}>
+            <animateMotion dur="1.8s" begin={`${s * 0.3}s`} repeatCount="indefinite"
               path={`M50,${38 + s * 24} L105,${155}`} />
           </circle>
-          <circle r={3} fill="#7b1fa2" opacity={0.8}>
-            <animateMotion dur="2s" begin={`${s * 0.3 + 0.15}s`} repeatCount="indefinite"
+          <circle r={7} fill="#7b1fa2" opacity={0.12}>
+            <animateMotion dur="1.8s" begin={`${s * 0.3}s`} repeatCount="indefinite"
+              path={`M50,${38 + s * 24} L105,${155}`} />
+          </circle>
+          <circle r={3.5} fill="#7b1fa2" opacity={0.85}>
+            <animateMotion dur="1.8s" begin={`${s * 0.3 + 0.15}s`} repeatCount="indefinite"
+              path={`M160,${38 + s * 24} L105,${155}`} />
+          </circle>
+          <circle r={7} fill="#7b1fa2" opacity={0.12}>
+            <animateMotion dur="1.8s" begin={`${s * 0.3 + 0.15}s`} repeatCount="indefinite"
+              path={`M160,${38 + s * 24} L105,${155}`} />
+          </circle>
+          {/* Second wave offset */}
+          <circle r={2.5} fill="#ba68c8" opacity={0.6}>
+            <animateMotion dur="1.8s" begin={`${s * 0.3 + 0.9}s`} repeatCount="indefinite"
+              path={`M50,${38 + s * 24} L105,${155}`} />
+          </circle>
+          <circle r={2.5} fill="#ba68c8" opacity={0.6}>
+            <animateMotion dur="1.8s" begin={`${s * 0.3 + 1.05}s`} repeatCount="indefinite"
               path={`M160,${38 + s * 24} L105,${155}`} />
           </circle>
         </g>
       ))}
+
+      {/* Impact pulse at pair cell */}
+      <circle cx={105} cy={155} r={8} fill="none" stroke="#7b1fa2" strokeWidth={2}>
+        <animate attributeName="r" values="8;20;8" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
+      </circle>
 
       <text x={105} y={235} textAnchor="middle" fontSize={12} fill="#555" fontFamily="Inter, sans-serif">
         Co-evolution signal → Pair feature
@@ -949,39 +996,195 @@ export function EvoformerDetail({ onBack }: { onBack: () => void }) {
             <OuterProductViz />
           )}
           {activeOp.id === 7 && (
-            <div style={{
-              textAlign: 'center', padding: 40,
-            }}>
-              <svg viewBox="0 0 300 200" style={{ width: 300 }}>
-                <rect x={20} y={30} width={260} height={50} rx={6} fill="#e3f2fd" stroke="#1565c0" strokeWidth={1.5} />
-                <text x={150} y={60} textAnchor="middle" fontSize={13} fill="#1565c0" fontFamily="Inter, sans-serif">
-                  Linear → ReLU → Linear
+            <div style={{ display: 'flex', gap: 32, alignItems: 'center', padding: 20 }}>
+              {/* Main stacked FFN diagram */}
+              <svg viewBox="0 0 340 520" style={{ width: 340, height: 'auto' }}>
+                <defs>
+                  <marker id="arrBlue" markerWidth={7} markerHeight={7} refX={6} refY={3.5} orient="auto">
+                    <path d="M0,0 L7,3.5 L0,7 Z" fill="#1565c0" />
+                  </marker>
+                  <marker id="arrGray" markerWidth={7} markerHeight={7} refX={6} refY={3.5} orient="auto">
+                    <path d="M0,0 L7,3.5 L0,7 Z" fill="#90a4ae" />
+                  </marker>
+                  <linearGradient id="ffnNodeGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#e3f2fd" />
+                    <stop offset="100%" stopColor="#bbdefb" />
+                  </linearGradient>
+                </defs>
+
+                {/* ── Input: pair[i,j] ── */}
+                <text x={170} y={18} textAnchor="middle" fontSize={13} fontWeight={600}
+                  fill="#1565c0" fontFamily="JetBrains Mono, monospace">pair[i,j]</text>
+                <text x={170} y={33} textAnchor="middle" fontSize={10}
+                  fill="#999" fontFamily="Inter, sans-serif">128 channels</text>
+
+                {/* Input neurons row */}
+                <g transform="translate(70, 42)">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <g key={i}>
+                      <circle cx={i * 50} cy={0} r={9} fill="#e3f2fd" stroke="#1565c0" strokeWidth={1.5} />
+                      <circle cx={i * 50} cy={0} r={4} fill="#1565c0" opacity={0.5 + i * 0.1}>
+                        <animate attributeName="opacity" values={`${0.3 + i * 0.1};${0.7 + i * 0.06};${0.3 + i * 0.1}`}
+                          dur="2s" begin={`${i * 0.15}s`} repeatCount="indefinite" />
+                      </circle>
+                    </g>
+                  ))}
+                  <text x={230} y={4} fontSize={9} fill="#999" fontFamily="Inter, sans-serif">×128</text>
+                </g>
+
+                {/* Arrow down */}
+                <line x1={170} y1={55} x2={170} y2={78} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
+
+                {/* ── Layer 1: Linear (expand) ── */}
+                <rect x={40} y={82} width={260} height={50} rx={8}
+                  fill="url(#ffnNodeGrad)" stroke="#1565c0" strokeWidth={2} />
+                <text x={170} y={103} textAnchor="middle" fontSize={14} fontWeight={700}
+                  fill="#1565c0" fontFamily="Inter, sans-serif">Linear</text>
+                <text x={170} y={120} textAnchor="middle" fontSize={10}
+                  fill="#64b5f6" fontFamily="Inter, sans-serif">128 → 512 (4× expansion)</text>
+
+                {/* Connection lines showing expansion */}
+                {Array.from({ length: 5 }).map((_, i) =>
+                  Array.from({ length: 8 }).map((_, j) => (
+                    <line key={`w1-${i}-${j}`}
+                      x1={70 + i * 50} y1={52} x2={55 + j * 33} y2={82}
+                      stroke="#1565c0" strokeWidth={0.3} opacity={0.08 + Math.abs(i - j * 0.6) * 0.02} />
+                  ))
+                )}
+
+                {/* Arrow down */}
+                <line x1={170} y1={135} x2={170} y2={158} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
+
+                {/* Hidden neurons (wider) */}
+                <g transform="translate(47, 140)">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <circle key={i} cx={i * 33} cy={0} r={7} fill="#bbdefb" stroke="#1565c0" strokeWidth={1} opacity={0.7} />
+                  ))}
+                </g>
+
+                {/* Arrow down */}
+                <line x1={170} y1={152} x2={170} y2={175} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
+
+                {/* ── ReLU activation ── */}
+                <rect x={60} y={178} width={220} height={65} rx={8}
+                  fill="#fff8e1" stroke="#f9a825" strokeWidth={2} />
+                <text x={170} y={198} textAnchor="middle" fontSize={14} fontWeight={700}
+                  fill="#f57f17" fontFamily="Inter, sans-serif">ReLU</text>
+                <text x={170} y={213} textAnchor="middle" fontSize={10}
+                  fill="#fbc02d" fontFamily="Inter, sans-serif">max(0, x)</text>
+
+                {/* ReLU curve inside the box */}
+                <g transform="translate(105, 218)">
+                  {/* Axes */}
+                  <line x1={0} y1={20} x2={130} y2={20} stroke="#e0e0e0" strokeWidth={1} />
+                  <line x1={65} y1={0} x2={65} y2={28} stroke="#e0e0e0" strokeWidth={1} />
+                  {/* Negative side (zeroed) */}
+                  <line x1={10} y1={20} x2={65} y2={20} stroke="#ef5350" strokeWidth={2.5} strokeLinecap="round" />
+                  {/* Positive side (linear) */}
+                  <line x1={65} y1={20} x2={120} y2={2} stroke="#4caf50" strokeWidth={2.5} strokeLinecap="round" />
+                  {/* Animated dot on ReLU curve */}
+                  <circle r={3.5} fill="#f57f17" opacity={0.9}>
+                    <animateMotion dur="3s" repeatCount="indefinite"
+                      path="M10,20 L65,20 L120,2" />
+                  </circle>
+                  <text x={25} y={15} fontSize={7} fill="#ef5350" fontFamily="Inter, sans-serif">killed</text>
+                  <text x={95} y={10} fontSize={7} fill="#4caf50" fontFamily="Inter, sans-serif">pass</text>
+                </g>
+
+                {/* Arrow down */}
+                <line x1={170} y1={248} x2={170} y2={272} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
+
+                {/* ── Layer 2: Linear (compress back) ── */}
+                <rect x={40} y={276} width={260} height={50} rx={8}
+                  fill="url(#ffnNodeGrad)" stroke="#1565c0" strokeWidth={2} />
+                <text x={170} y={297} textAnchor="middle" fontSize={14} fontWeight={700}
+                  fill="#1565c0" fontFamily="Inter, sans-serif">Linear</text>
+                <text x={170} y={314} textAnchor="middle" fontSize={10}
+                  fill="#64b5f6" fontFamily="Inter, sans-serif">512 → 128 (compress back)</text>
+
+                {/* Arrow down */}
+                <line x1={170} y1={330} x2={170} y2={360} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
+
+                {/* ── Residual add ── */}
+                {/* Residual skip connection */}
+                <path d="M38,107 Q12,107 12,235 Q12,375 160,375"
+                  fill="none" stroke="#90a4ae" strokeWidth={2} strokeDasharray="6,4" />
+                <text x={18} y={240} fontSize={10} fill="#90a4ae" fontFamily="Inter, sans-serif"
+                  transform="rotate(-90, 18, 240)">residual skip</text>
+
+                {/* Animated residual particle */}
+                <circle r={3} fill="#90a4ae" opacity={0.7}>
+                  <animateMotion dur="3s" repeatCount="indefinite"
+                    path="M38,107 Q12,107 12,235 Q12,375 160,375" />
+                </circle>
+
+                {/* Plus circle */}
+                <circle cx={170} cy={375} r={14} fill="#fff" stroke="#1565c0" strokeWidth={2} />
+                <line x1={162} y1={375} x2={178} y2={375} stroke="#1565c0" strokeWidth={2.5} />
+                <line x1={170} y1={367} x2={170} y2={383} stroke="#1565c0" strokeWidth={2.5} />
+                <text x={200} y={379} fontSize={10} fill="#999" fontFamily="Inter, sans-serif">
+                  x + FFN(x)
                 </text>
 
-                {/* Input arrow */}
-                <line x1={150} y1={10} x2={150} y2={28} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
-                <text x={150} y={8} textAnchor="middle" fontSize={10} fill="#999" fontFamily="Inter, sans-serif">pair[i,j]</text>
+                {/* Arrow down */}
+                <line x1={170} y1={392} x2={170} y2={418} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
 
-                {/* Output arrow */}
-                <line x1={150} y1={82} x2={150} y2={110} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
+                {/* ── LayerNorm ── */}
+                <rect x={95} y={422} width={150} height={36} rx={6}
+                  fill="#ede7f6" stroke="#7e57c2" strokeWidth={1.5} />
+                <text x={170} y={445} textAnchor="middle" fontSize={13} fontWeight={600}
+                  fill="#5e35b1" fontFamily="Inter, sans-serif">LayerNorm</text>
 
-                {/* Residual */}
-                <path d="M30,55 Q10,55 10,90 Q10,120 150,120" fill="none" stroke="#999" strokeWidth={1.5} strokeDasharray="4,3" />
-                <circle cx={150} cy={120} r={10} fill="#fff" stroke="#1565c0" strokeWidth={1.5} />
-                <text x={150} y={124} textAnchor="middle" fontSize={12} fill="#1565c0" fontFamily="Inter, sans-serif">+</text>
-                <text x={40} y={96} fontSize={9} fill="#999" fontFamily="Inter, sans-serif">residual</text>
+                {/* Arrow down to output */}
+                <line x1={170} y1={462} x2={170} y2={485} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
 
-                {/* LayerNorm */}
-                <line x1={150} y1={132} x2={150} y2={155} stroke="#1565c0" strokeWidth={2} markerEnd="url(#arrBlue)" />
-                <rect x={100} y={155} width={100} height={25} rx={4} fill="#e8eaf6" stroke="#5c6bc0" strokeWidth={1} />
-                <text x={150} y={172} textAnchor="middle" fontSize={11} fill="#5c6bc0" fontFamily="Inter, sans-serif">LayerNorm</text>
+                {/* Output */}
+                <text x={170} y={502} textAnchor="middle" fontSize={12} fontWeight={600}
+                  fill="#1565c0" fontFamily="JetBrains Mono, monospace">pair[i,j]'</text>
+                <text x={170} y={516} textAnchor="middle" fontSize={9}
+                  fill="#999" fontFamily="Inter, sans-serif">updated</text>
 
-                <defs>
-                  <marker id="arrBlue" markerWidth={6} markerHeight={6} refX={5} refY={3} orient="auto">
-                    <path d="M0,0 L6,3 L0,6 Z" fill="#1565c0" />
-                  </marker>
-                </defs>
+                {/* Data flow particles through the main path */}
+                <circle r={3} fill="#1565c0" opacity={0.6}>
+                  <animateMotion dur="4s" repeatCount="indefinite"
+                    path="M170,42 L170,82 L170,135 L170,178 L170,248 L170,276 L170,330 L170,360 L170,392 L170,422 L170,462 L170,485" />
+                </circle>
+                <circle r={6} fill="#1565c0" opacity={0.1}>
+                  <animateMotion dur="4s" repeatCount="indefinite"
+                    path="M170,42 L170,82 L170,135 L170,178 L170,248 L170,276 L170,330 L170,360 L170,392 L170,422 L170,462 L170,485" />
+                </circle>
               </svg>
+
+              {/* Right side: intuition explanation */}
+              <div style={{ maxWidth: 220 }}>
+                <h4 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 700, color: '#1a237e', fontFamily: 'Inter, sans-serif' }}>
+                  Why expand then compress?
+                </h4>
+                <div style={{
+                  padding: '10px 12px', borderRadius: 8,
+                  background: '#f5f5f5', border: '1px solid #e0e0e0',
+                  fontSize: 12, color: '#555', lineHeight: 1.6,
+                  fontFamily: 'Inter, sans-serif', marginBottom: 12,
+                }}>
+                  The "bottleneck" design lets the network learn complex feature interactions in the expanded 512-dim space, then distill them back to 128 dims.
+                </div>
+                <div style={{
+                  padding: '10px 12px', borderRadius: 8,
+                  background: '#fff8e1', border: '1px solid #ffe082',
+                  fontSize: 12, color: '#555', lineHeight: 1.6,
+                  fontFamily: 'Inter, sans-serif', marginBottom: 12,
+                }}>
+                  <strong style={{ color: '#f57f17' }}>ReLU</strong> kills negative values → creates <em>sparse</em> activations → each pair feature only activates a subset of the 512 hidden units.
+                </div>
+                <div style={{
+                  padding: '10px 12px', borderRadius: 8,
+                  background: '#ede7f6', border: '1px solid #d1c4e9',
+                  fontSize: 12, color: '#555', lineHeight: 1.6,
+                  fontFamily: 'Inter, sans-serif',
+                }}>
+                  <strong style={{ color: '#5e35b1' }}>LayerNorm</strong> stabilizes training by normalizing each pair feature to zero mean, unit variance.
+                </div>
+              </div>
             </div>
           )}
         </div>
