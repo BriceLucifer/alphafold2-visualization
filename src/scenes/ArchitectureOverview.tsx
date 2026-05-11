@@ -770,9 +770,14 @@ export function ArchitectureOverview({ onDrillIn, onBack }: { onDrillIn?: (targe
           {/* Recycling */}
           <ArrowLine points={[[760, Y_MSA + 240], [760, Y_RECYCLE - 5]]} color="#78909c" />
           <ArrowLine points={[[1135, Y_MSA + 240], [1135, Y_RECYCLE - 5]]} color="#78909c" />
-          <rect x={540} y={Y_RECYCLE} width={650} height={42} rx={6} fill="rgba(200,220,240,0.2)" stroke="#90a4ae" strokeWidth={1.5} />
-          <text x={865} y={Y_RECYCLE + 18} textAnchor="middle" fontSize={14} fill="#333" fontFamily="Inter, sans-serif">← Recycling (N_cycle = 4, Alg 30)</text>
-          <text x={865} y={Y_RECYCLE + 36} textAnchor="middle" fontSize={10} fill="#78909c" fontFamily="JetBrains Mono, monospace">stopgrad between cycles · s_i + z_ij + Cα distogram fed back</text>
+          <g onClick={() => onDrillIn?.('recycling3d')} cursor="pointer">
+            <rect x={540} y={Y_RECYCLE} width={650} height={42} rx={6} fill="rgba(200,220,240,0.2)" stroke="#90a4ae" strokeWidth={1.5} />
+            <text x={865} y={Y_RECYCLE + 18} textAnchor="middle" fontSize={14} fill="#333" fontFamily="Inter, sans-serif">← Recycling (N_cycle = 4, Alg 30)</text>
+            <text x={865} y={Y_RECYCLE + 36} textAnchor="middle" fontSize={10} fill="#78909c" fontFamily="JetBrains Mono, monospace">stopgrad between cycles · s_i + z_ij + Cα distogram fed back</text>
+            <text x={1175} y={Y_RECYCLE + 28} textAnchor="end" fontSize={10} fill="#1976d2" fontFamily="Inter, sans-serif" opacity={0.85}>
+              click to explore →
+            </text>
+          </g>
           <ArrowLine points={[[540, Y_RECYCLE + 21], [490, Y_RECYCLE + 21], [490, Y_MSA + 95], [510, Y_MSA + 93]]} color="#78909c" dashed />
           <ArrowLine points={[[540, Y_RECYCLE + 21], [490, Y_RECYCLE + 21], [490, Y_PAIR + 90], [510, Y_PAIR + 88]]} color="#78909c" dashed />
 
