@@ -7,8 +7,9 @@ import { InputEmbeddingDetail } from './scenes/InputEmbeddingDetail'
 import { IPAScene3D } from './scenes/IPAScene3D'
 import { TriangleAttention3DPage } from './scenes/TriangleAttention3DPage'
 import { Recycling3DScene } from './scenes/Recycling3DScene'
+import { BackboneRefinement3DScene } from './scenes/BackboneRefinement3DScene'
 
-type View = 'intro' | 'overview' | 'evoformer' | 'structure' | 'embeddings' | 'ipa3d' | 'triangle3d' | 'recycling3d'
+type View = 'intro' | 'overview' | 'evoformer' | 'structure' | 'embeddings' | 'ipa3d' | 'triangle3d' | 'recycling3d' | 'backbone3d'
 
 export default function App() {
   const [view, setView] = useState<View>('intro')
@@ -72,6 +73,7 @@ export default function App() {
           <StructureModuleDetail
             onBack={() => navigateTo('overview')}
             onLaunch3D={() => navigateTo('ipa3d')}
+            onLaunchBackbone3D={() => navigateTo('backbone3d')}
           />
         )}
         {displayView === 'embeddings' && (
@@ -85,6 +87,9 @@ export default function App() {
         )}
         {displayView === 'recycling3d' && (
           <Recycling3DScene onBack={() => navigateTo('overview')} />
+        )}
+        {displayView === 'backbone3d' && (
+          <BackboneRefinement3DScene onBack={() => navigateTo('structure')} />
         )}
       </div>
     </div>

@@ -810,7 +810,7 @@ function BlockList({ ops, activeId, onSelect }: {
 
 // ── Main Component ────────────────────────────────────
 
-export function StructureModuleDetail({ onBack, onLaunch3D }: { onBack: () => void; onLaunch3D?: () => void }) {
+export function StructureModuleDetail({ onBack, onLaunch3D, onLaunchBackbone3D }: { onBack: () => void; onLaunch3D?: () => void; onLaunchBackbone3D?: () => void }) {
   const [activeOpId, setActiveOpId] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [backboneBlock, setBackboneBlock] = useState(0)
@@ -878,6 +878,17 @@ export function StructureModuleDetail({ onBack, onLaunch3D }: { onBack: () => vo
             boxShadow: '0 0 12px rgba(102,187,106,0.15)',
           }}>
             ▶ Open IPA in 3D
+          </button>
+        )}
+        {onLaunchBackbone3D && activeOpId === 1 && (
+          <button onClick={onLaunchBackbone3D} style={{
+            border: '1px solid rgba(66,165,245,0.4)', borderRadius: 6,
+            background: 'rgba(66,165,245,0.12)',
+            padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: '#90caf9',
+            fontWeight: 600, marginLeft: 8,
+            boxShadow: '0 0 12px rgba(66,165,245,0.15)',
+          }}>
+            ▶ Open Backbone Refinement in 3D
           </button>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
