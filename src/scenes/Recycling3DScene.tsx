@@ -306,16 +306,19 @@ function DistogramFeedbackPanel({
   )
 }
 
-function StationRing({ center, active }: { center: THREE.Vector3; active: boolean }) {
+function StationRing({ active }: { active: boolean }) {
   const ringRef = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
-    if (!ringRef.current || !active) return
-    const t = clock.getElapsedTime()
-    const s = 1 + Math.sin(t * 2) * 0.06
-    ringRef.current.scale.set(s, 1, s)
+    if (!ringRef.current) return
+    if (active) {
+      const s = 1 + Math.sin(clock.getElapsedTime() * 2) * 0.06
+      ringRef.current.scale.set(s, 1, s)
+    } else if (ringRef.current.scale.x !== 1) {
+      ringRef.current.scale.set(1, 1, 1)
+    }
   })
   return (
-    <mesh ref={ringRef} position={[center.x, -1.05, center.z]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh ref={ringRef} position={[0, -1.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[0.9, 1.05, 64]} />
       <meshBasicMaterial
         color={active ? '#ffd54f' : '#445566'}
@@ -341,7 +344,7 @@ function FeedbackStreamPath({
   const curve = useMemo(() => {
     const mid = new THREE.Vector3().lerpVectors(from, to, 0.5)
     mid.y += 1.4 + offset * 0.4
-    return new THREE.QuadraticBezierCurve3(from.clone(), mid, to.clone())
+    return new THREE.QuadraticBezierCurve3(from, mid, to)
   }, [from, to, offset])
 
   const pathPts = useMemo(
@@ -355,8 +358,8 @@ function FeedbackStreamPath({
     const t = clock.getElapsedTime()
     groupRef.current.children.forEach((child, idx) => {
       const phase = ((t * 0.4 + (idx / particleCount) + offset * 0.2) % 1)
-      const pt = curve.getPoint(phase)
-      child.position.copy(pt)
+      // Write into child.position directly — avoids one Vector3 alloc per particle per frame.
+      curve.getPoint(phase, child.position as THREE.Vector3)
     })
   })
 
@@ -410,12 +413,12 @@ function Scene({
             key={`station-${l}`}
             position={c}
             onClick={(e) => { e.stopPropagation(); setActiveCycle(l) }}
-            onPointerOver={() => { document.body.style.cursor = 'pointer' }}
-            onPointerOut={() => { document.body.style.cursor = 'auto' }}
+            onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer' }}
+            onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto' }}
           >
             <BackboneChain chain={chain} active={active} dim={!active} />
             <PairRepTile position={[0, 1.5, 0]} seed={l * 137 + 11} active={active} />
-            <StationRing center={new THREE.Vector3(0, 0, 0)} active={active} />
+            <StationRing active={active} />
             <Html position={[0, -1.35, 0]} center distanceFactor={7} style={{ pointerEvents: 'none' }}>
               <div style={{
                 padding: '3px 10px',
@@ -437,8 +440,8 @@ function Scene({
 
       {/* Feedback paths: from station l → l+1 */}
       {chains.slice(0, -1).map((_, l) => {
-        const from = centers[l].clone()
-        const to = centers[l + 1].clone()
+        const from = centers[l]
+        const to = centers[l + 1]
         return (
           <group key={`fb-${l}`}>
             <FeedbackStreamPath from={from} to={to} color={STREAM_COLORS.s}         particleCount={5} offset={0}    visible={showS} />
@@ -511,6 +514,9 @@ export function Recycling3DScene({ onBack }: { onBack: () => void }) {
     }, period)
     return () => clearInterval(id)
   }, [playing, speed])
+
+  // Restore cursor on unmount in case the user navigates away while hovering a station.
+  useEffect(() => () => { document.body.style.cursor = 'auto' }, [])
 
   const narration = NARRATION[activeCycle]
 
