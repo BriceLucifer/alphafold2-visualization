@@ -4,8 +4,10 @@ import { ArchitectureOverview } from './scenes/ArchitectureOverview'
 import { EvoformerDetail } from './scenes/EvoformerDetail'
 import { StructureModuleDetail } from './scenes/StructureModuleDetail'
 import { InputEmbeddingDetail } from './scenes/InputEmbeddingDetail'
+import { IPAScene3D } from './scenes/IPAScene3D'
+import { TriangleAttention3DPage } from './scenes/TriangleAttention3DPage'
 
-type View = 'intro' | 'overview' | 'evoformer' | 'structure' | 'embeddings'
+type View = 'intro' | 'overview' | 'evoformer' | 'structure' | 'embeddings' | 'ipa3d' | 'triangle3d'
 
 export default function App() {
   const [view, setView] = useState<View>('intro')
@@ -60,13 +62,25 @@ export default function App() {
           />
         )}
         {displayView === 'evoformer' && (
-          <EvoformerDetail onBack={() => navigateTo('overview')} />
+          <EvoformerDetail
+            onBack={() => navigateTo('overview')}
+            onLaunch3D={() => navigateTo('triangle3d')}
+          />
         )}
         {displayView === 'structure' && (
-          <StructureModuleDetail onBack={() => navigateTo('overview')} />
+          <StructureModuleDetail
+            onBack={() => navigateTo('overview')}
+            onLaunch3D={() => navigateTo('ipa3d')}
+          />
         )}
         {displayView === 'embeddings' && (
           <InputEmbeddingDetail onBack={() => navigateTo('overview')} />
+        )}
+        {displayView === 'ipa3d' && (
+          <IPAScene3D onBack={() => navigateTo('structure')} />
+        )}
+        {displayView === 'triangle3d' && (
+          <TriangleAttention3DPage onBack={() => navigateTo('evoformer')} />
         )}
       </div>
     </div>

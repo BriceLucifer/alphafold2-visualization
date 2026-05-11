@@ -810,7 +810,7 @@ function BlockList({ ops, activeId, onSelect }: {
 
 // ── Main Component ────────────────────────────────────
 
-export function StructureModuleDetail({ onBack }: { onBack: () => void }) {
+export function StructureModuleDetail({ onBack, onLaunch3D }: { onBack: () => void; onLaunch3D?: () => void }) {
   const [activeOpId, setActiveOpId] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [backboneBlock, setBackboneBlock] = useState(0)
@@ -869,6 +869,17 @@ export function StructureModuleDetail({ onBack }: { onBack: () => void }) {
         <span style={{ fontSize: 12, color: DARK.textDim }}>
           8 layers — abstract features → 3D atomic coordinates
         </span>
+        {onLaunch3D && (
+          <button onClick={onLaunch3D} style={{
+            border: '1px solid rgba(102,187,106,0.4)', borderRadius: 6,
+            background: 'rgba(102,187,106,0.12)',
+            padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: '#a5d6a7',
+            fontWeight: 600, marginLeft: 12,
+            boxShadow: '0 0 12px rgba(102,187,106,0.15)',
+          }}>
+            ▶ Open IPA in 3D
+          </button>
+        )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
           <button onClick={() => { setActiveOpId(id => (id - 1 + SM_OPS.length) % SM_OPS.length); setPlaying(false) }}
             style={darkBtn}>◀</button>

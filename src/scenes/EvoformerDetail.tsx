@@ -992,7 +992,7 @@ function BlockList({ ops, activeId, onSelect }: {
 
 // ── Main Component ────────────────────────────────────
 
-export function EvoformerDetail({ onBack }: { onBack: () => void }) {
+export function EvoformerDetail({ onBack, onLaunch3D }: { onBack: () => void; onLaunch3D?: () => void }) {
   const [activeOpId, setActiveOpId] = useState(3)
   const [playing, setPlaying] = useState(true)
   const [highlightK, setHighlightK] = useState(0)
@@ -1062,6 +1062,17 @@ export function EvoformerDetail({ onBack }: { onBack: () => void }) {
         <span style={{ fontSize: 12, color: DARK.textDim }}>
           48 blocks × 8 operations per block
         </span>
+        {onLaunch3D && isTriangleOp && (
+          <button onClick={onLaunch3D} style={{
+            border: '1px solid rgba(102,187,106,0.4)', borderRadius: 6,
+            background: 'rgba(102,187,106,0.12)',
+            padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: '#a5d6a7',
+            fontWeight: 600, marginLeft: 12,
+            boxShadow: '0 0 12px rgba(102,187,106,0.15)',
+          }}>
+            ▶ Open Triangle in 3D
+          </button>
+        )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
           <button onClick={() => { setActiveOpId(id => (id - 1 + EVOFORMER_OPS.length) % EVOFORMER_OPS.length); setPlaying(false) }}
             style={darkBtnStyle}>◀</button>
