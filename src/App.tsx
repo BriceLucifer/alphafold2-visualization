@@ -8,8 +8,9 @@ import { IPAScene3D } from './scenes/IPAScene3D'
 import { TriangleAttention3DPage } from './scenes/TriangleAttention3DPage'
 import { Recycling3DScene } from './scenes/Recycling3DScene'
 import { BackboneRefinement3DScene } from './scenes/BackboneRefinement3DScene'
+import { PlddtConfidence3DScene } from './scenes/PlddtConfidence3DScene'
 
-type View = 'intro' | 'overview' | 'evoformer' | 'structure' | 'embeddings' | 'ipa3d' | 'triangle3d' | 'recycling3d' | 'backbone3d'
+type View = 'intro' | 'overview' | 'evoformer' | 'structure' | 'embeddings' | 'ipa3d' | 'triangle3d' | 'recycling3d' | 'backbone3d' | 'plddt3d'
 
 export default function App() {
   const [view, setView] = useState<View>('intro')
@@ -74,6 +75,7 @@ export default function App() {
             onBack={() => navigateTo('overview')}
             onLaunch3D={() => navigateTo('ipa3d')}
             onLaunchBackbone3D={() => navigateTo('backbone3d')}
+            onLaunchPlddt3D={() => navigateTo('plddt3d')}
           />
         )}
         {displayView === 'embeddings' && (
@@ -90,6 +92,9 @@ export default function App() {
         )}
         {displayView === 'backbone3d' && (
           <BackboneRefinement3DScene onBack={() => navigateTo('structure')} />
+        )}
+        {displayView === 'plddt3d' && (
+          <PlddtConfidence3DScene onBack={() => navigateTo('structure')} />
         )}
       </div>
     </div>
