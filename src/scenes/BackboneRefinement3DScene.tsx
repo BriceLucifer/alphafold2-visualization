@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, CatmullRomLine, Line, Html } from '@react-three/drei'
+import { OrbitControls, CatmullRomLine, Line } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { KaTeXFormula } from '../ui/KaTeXFormula'
@@ -94,7 +94,7 @@ function predictedQuatRaw(
   prev: THREE.Quaternion,
   curr: THREE.Quaternion,
   noiseSeed: number,
-): { b: number; c: number; d: number; bn: number; cn: number; dn: number } {
+): { b: number; c: number; d: number } {
   const inv = prev.clone().invert()
   const delta = curr.clone().multiply(inv)
   // Force positive w hemisphere so division by w is stable.
@@ -102,11 +102,10 @@ function predictedQuatRaw(
     delta.x *= -1; delta.y *= -1; delta.z *= -1; delta.w *= -1
   }
   const wSafe = Math.max(1e-6, delta.w)
-  // Pre-normalisation (1, b, c, d) — what the network actually emits.
   let b = delta.x / wSafe
   let c = delta.y / wSafe
   let d = delta.z / wSafe
-  // Add a tiny deterministic noise so consecutive layers don't read as identical.
+  // Tiny deterministic noise so consecutive layers don't read as identical.
   let s = (noiseSeed * 1664525 + 1013904223) >>> 0
   const rnd = () => {
     s = (s * 1664525 + 1013904223) >>> 0
@@ -115,11 +114,7 @@ function predictedQuatRaw(
   b += rnd() * 0.03
   c += rnd() * 0.03
   d += rnd() * 0.03
-  // Normalised version (what (1,b,c,d) / √(1+b²+c²+d²) yields).
-  const norm = Math.sqrt(1 + b * b + c * c + d * d)
-  return { b, c, d, bn: 1 / norm, cn: b / norm, dn: c / norm }
-  // (Returns bn=w_n, cn=x_n, dn=y_n, but we only display the matrix derived
-  //  from the actual delta — the raw scalars are what's pedagogically useful.)
+  return { b, c, d }
 }
 
 // ── Interpolated state used for the live 3D render ──────────────────────────
@@ -137,16 +132,21 @@ function lerpFrameStates(
 
 // ── 3D sub-components ───────────────────────────────────────────────────────
 
+// Module-level scratch — FrameTriad recomputes per frame for every residue,
+// and allocations here add up fast (84+ Vector3s/frame for N_RES=14).
+const _triadE = new THREE.Vector3()
+
 function FrameTriad({
   origin, quat, scale, dim,
 }: { origin: THREE.Vector3; quat: THREE.Quaternion; scale: number; dim: boolean }) {
-  const e1 = new THREE.Vector3(1, 0, 0).applyQuaternion(quat)
-  const e2 = new THREE.Vector3(0, 1, 0).applyQuaternion(quat)
-  const e3 = new THREE.Vector3(0, 0, 1).applyQuaternion(quat)
-  const o = origin.toArray() as [number, number, number]
-  const a = origin.clone().add(e1.multiplyScalar(scale)).toArray() as [number, number, number]
-  const b = origin.clone().add(e2.multiplyScalar(scale)).toArray() as [number, number, number]
-  const c = origin.clone().add(e3.multiplyScalar(scale)).toArray() as [number, number, number]
+  const ox = origin.x, oy = origin.y, oz = origin.z
+  const o: [number, number, number] = [ox, oy, oz]
+  _triadE.set(1, 0, 0).applyQuaternion(quat).multiplyScalar(scale)
+  const a: [number, number, number] = [ox + _triadE.x, oy + _triadE.y, oz + _triadE.z]
+  _triadE.set(0, 1, 0).applyQuaternion(quat).multiplyScalar(scale)
+  const b: [number, number, number] = [ox + _triadE.x, oy + _triadE.y, oz + _triadE.z]
+  _triadE.set(0, 0, 1).applyQuaternion(quat).multiplyScalar(scale)
+  const c: [number, number, number] = [ox + _triadE.x, oy + _triadE.y, oz + _triadE.z]
   const opacity = dim ? 0.35 : 1
   return (
     <>
@@ -408,9 +408,9 @@ export function BackboneRefinement3DScene({ onBack }: { onBack: () => void }) {
       [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)],
     ]
     // Delta translation: position(layerIdx) − position(layerIdx-1).
-    const dt = allLayers[layerIdx][selectedI].pos.clone()
+    const dPos = allLayers[layerIdx][selectedI].pos.clone()
       .sub(allLayers[layerIdx - 1][selectedI].pos)
-    return { b: raw.b, c: raw.c, d: raw.d, R, dt }
+    return { b: raw.b, c: raw.c, d: raw.d, R, dt: dPos }
   }, [layerIdx, selectedI, allLayers])
 
   return (
@@ -492,10 +492,6 @@ export function BackboneRefinement3DScene({ onBack }: { onBack: () => void }) {
           <Bloom intensity={0.55} luminanceThreshold={0.55} luminanceSmoothing={0.4} mipmapBlur />
           <Vignette eskil={false} offset={0.15} darkness={0.7} />
         </EffectComposer>
-
-        <Html position={[0, 0, 0]} fullscreen pointerEvents="none">
-          <div />
-        </Html>
       </Canvas>
 
       {/* Left explainer panel */}
